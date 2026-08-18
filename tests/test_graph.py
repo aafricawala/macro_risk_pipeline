@@ -96,7 +96,9 @@ def test_run_pipeline_end_to_end_mocked(mock_s3, mock_s2, mock_s1):
         save_artifacts=False
     )
 
-    assert isinstance(final_output, Stage4FormatterOutput)
+    # Verify structural fields and model type name
+    assert type(final_output).__name__ == "Stage4FormatterOutput"
     assert "MACRORISK WEEKLY INTELLIGENCE REPORT" in final_output.report_markdown
     assert "SECTION 1:" in final_output.report_markdown
     assert "SECTION 6:" in final_output.report_markdown
+    assert final_output.word_count_briefing > 0

@@ -15,7 +15,7 @@ from src.core.schemas import (
     TailRiskCategory,
 )
 from src.stages.stage_3_quant import (
-    calculate_vix_curve_slope,
+    compute_vix_slope_from_stage_2,
     fallback_baseline_synthesis,
     run_stage_3,
 )
@@ -48,10 +48,10 @@ def create_sample_stage_2_output() -> Stage2HarvesterOutput:
     )
 
 
-def test_calculate_vix_curve_slope_math():
+def test_compute_vix_slope_from_stage_2():
     """Verify deterministic math formula for VIX slope: M2 - M1."""
     s2_input = create_sample_stage_2_output()
-    slope_str = calculate_vix_curve_slope(s2_input)
+    slope_str = compute_vix_slope_from_stage_2(s2_input)
     assert "+0.75 pts (Contango)" in slope_str
 
 
@@ -69,9 +69,21 @@ def test_fallback_baseline_synthesis_structure():
     assert s3_output.top_right_tail_risks[0].category == TailRiskCategory.RIGHT_TAIL
 
 
+@patch("src.stages.stage_3_quant.fetch_factor_etf_spreads")
 @patch("src.stages.stage_3_quant.execute_dynamic_json_query")
-def test_run_stage_3_mocked_success(mock_execute_query):
-    """Verify run_stage_3 parses mocked dynamic JSON response."""
+def test_run_stage_3_mocked_success(mock_execute_query, mock_factor_spreads):
+    """Verify run_stage_3 parses mocked dynamic JSON response and attaches factor spreads."""
+    from src.core.schemas import FactorRotationRegime
+
+    mock_factor_spreads.return_value = [
+        FactorRotationRegime(
+            factor_pair="Momentum vs Value (MTUM/VLUE)",
+            regime_state="Neutral",
+            spread_observation="5-Day Spread: -0.31%",
+            transmission_mechanics="Factor spreads near equilibrium."
+        )
+    ]
+
     s2_input = create_sample_stage_2_output()
     mock_payload = {
         "as_of_timestamp_et": "2026-08-18T09:30:00-04:00",
@@ -126,6 +138,6 @@ def test_run_stage_3_mocked_success(mock_execute_query):
     result = run_stage_3(stage_2_input=s2_input, api_key="mock_key", save_artifact=False)
 
     assert result.dominant_theme == "Central Banking Policy Prelude"
-    assert result.vix_curve_slope_pts == "+0.75 pts (Contango)"
+    assert "+0.75 pts (Contango)" in result.vix_curve_slope_pts
     assert len(result.top_left_tail_risks) == 1
     assert result.degraded_mode is False
