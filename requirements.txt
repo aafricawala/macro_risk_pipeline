@@ -1,0 +1,20 @@
+# Core Data Validation & Contracts
+pydantic>=2.7.0
+
+# Timezone & Calendar Math
+pytz>=2024.1
+
+# Observability & Structured Logging
+loguru>=0.7.2
+
+# Resiliency & Retries
+tenacity>=8.2.3
+
+# LLM Inference (Google GenAI for Gemini 3.7 / 2.5 Flash)
+google-genai>=0.1.1
+
+# HTTP & Public Ingestion
+requests>=2.31.0
+
+# Testing Framework
+pytest>=8.0.0
