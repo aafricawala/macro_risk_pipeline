@@ -1,4 +1,4 @@
-# Core Data Validation & Contracts
+# Core Data Contracts & Validation
 pydantic>=2.7.0
 
 # Timezone & Calendar Math
@@ -10,11 +10,14 @@ loguru>=0.7.2
 # Resiliency & Retries
 tenacity>=8.2.3
 
-# LLM Inference (Google GenAI for Gemini 3.7 / 2.5 Flash)
+# LLM Inference (Google GenAI for Gemini 3.x Flash)
 google-genai>=0.1.1
 
-# HTTP & Public Ingestion
+# HTTP & Public Macro REST Ingestion
 requests>=2.31.0
 
-# Testing Framework
+# Real-Time Factor ETF Ingestion
+yfinance>=0.2.36
+
+# Automated Testing Framework
 pytest>=8.0.0
