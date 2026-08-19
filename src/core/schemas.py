@@ -56,6 +56,16 @@ class ShockType(str, Enum):
     PBOC_STEALTH_LIQUIDITY = "PBOC_STEALTH_LIQUIDITY"
 
 
+class SourceCategory(str, Enum):
+    MACRO_CALENDAR = "MACRO_CALENDAR"
+    CENTRAL_BANKING = "CENTRAL_BANKING"
+    TREASURY_AND_YIELDS = "TREASURY_AND_YIELDS"
+    CORPORATE_AND_EARNINGS = "CORPORATE_AND_EARNINGS"
+    DERIVATIVES_AND_OPEX = "DERIVATIVES_AND_OPEX"
+    SECTOR_AND_COMMODITY = "SECTOR_AND_COMMODITY"
+    GEOPOLITICS_AND_NEWS = "GEOPOLITICS_AND_NEWS"
+
+
 # =====================================================================
 # UNSCHEDULED SHOCK MONITOR SCHEMAS
 # =====================================================================
