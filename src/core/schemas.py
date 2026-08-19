@@ -3,8 +3,8 @@ Module Name: schemas.py
 Repo Path: src/core/schemas.py
 
 BCBS 239 Data Lineage & Compliance Standards:
-- Canonical Schema Registry for Stages 1, 2, 3, and 4.
-- Strict Pydantic v2 validation across the entire micro-agent pipeline.
+- Canonical Schema Registry for Stages 1 through 5, and Unscheduled Shock Monitoring.
+- Enforces strict Pydantic v2 immutability and type validation across all data pipeline states.
 """
 
 from datetime import date, datetime
@@ -43,8 +43,41 @@ class TailRiskCategory(str, Enum):
     RIGHT_TAIL = "RIGHT_TAIL"
 
 
+class TrafficLightStatus(str, Enum):
+    GREEN = "GREEN"
+    YELLOW = "YELLOW"
+    RED = "RED"
+
+
+class ShockType(str, Enum):
+    BANK_FAILURE_FDIC = "BANK_FAILURE_FDIC"
+    SOVEREIGN_RATING_ACTION = "SOVEREIGN_RATING_ACTION"
+    GEOPOLITICAL_KINETIC = "GEOPOLITICAL_KINETIC"
+    PBOC_STEALTH_LIQUIDITY = "PBOC_STEALTH_LIQUIDITY"
+
+
 # =====================================================================
-# STAGE 1 SCHEMAS
+# UNSCHEDULED SHOCK MONITOR SCHEMAS
+# =====================================================================
+
+class UnscheduledShockItem(BaseModel):
+    shock_type: ShockType = Field(..., description="Classification of unscheduled shock")
+    title: str = Field(..., description="Headline of breaking shock event")
+    summary: str = Field(..., description="Clean plain-text summary of intervention or disruption")
+    source_url: str = Field(..., description="Source verification URL")
+    epistemic_tag: EpistemicTag = Field(default=EpistemicTag.VERIFIED_OFFICIAL)
+    timestamp_et: str = Field(..., description="Timestamp of detection in US Eastern Time")
+    severity_score: int = Field(..., ge=1, le=5, description="Severity rating 1 to 5")
+
+
+class ShockMonitorResult(BaseModel):
+    shocks_detected: bool = Field(..., description="True if any unscheduled shocks were detected")
+    active_shock_alerts: List[UnscheduledShockItem] = Field(default_factory=list, description="List of detected shocks")
+    is_emergency_regime: bool = Field(default=False, description="True if Tier-1 bank failure or sovereign downgrade detected")
+
+
+# =====================================================================
+# STAGE 1 SCHEMAS (TEMPORAL & REGIME)
 # =====================================================================
 
 class DateWindow(BaseModel):
@@ -97,7 +130,7 @@ class Stage1TemporalOutput(BaseModel):
 
 
 # =====================================================================
-# STAGE 2 SCHEMAS
+# STAGE 2 SCHEMAS (HARVESTER & 7 RISK MODULES)
 # =====================================================================
 
 class KeyValueItem(BaseModel):
@@ -203,7 +236,7 @@ class Stage2HarvesterOutput(BaseModel):
 
 
 # =====================================================================
-# STAGE 3 SCHEMAS
+# STAGE 3 SCHEMAS (QUANT SYNTHESIS & TALEB STRESS TESTING)
 # =====================================================================
 
 class TailRiskItem(BaseModel):
@@ -262,15 +295,36 @@ class Stage3QuantSynthesisOutput(BaseModel):
 
 
 # =====================================================================
-# STAGE 4 SCHEMAS (EXECUTIVE FORMATTER & SERIALIZATION)
+# STAGE 4 SCHEMAS (INSTITUTIONAL FORMATTER)
 # =====================================================================
 
 class Stage4FormatterOutput(BaseModel):
     as_of_timestamp_et: datetime
     coverage_start_date: date
     coverage_end_date: date
-    report_markdown: str = Field(..., description="Complete C-suite Markdown report")
-    report_file_path: str = Field(..., description="Persisted path to Production report")
-    csv_file_paths: List[str] = Field(default_factory=list, description="Paths to the 7 saved CSV appendices")
-    word_count_briefing: int = Field(..., description="Executive briefing word count (target <= 150)")
+    report_markdown: str
+    report_file_path: str
+    csv_file_paths: List[str] = Field(default_factory=list)
+    word_count_briefing: int
+    audit_trace: List[str] = Field(default_factory=list)
+
+
+# =====================================================================
+# STAGE 5 SCHEMAS (RETAIL FORMATTER)
+# =====================================================================
+
+class RetailActionItem(BaseModel):
+    asset_bucket: str = Field(..., description="Stocks / 401k, Bonds / CD, Cash / High-Yield")
+    action_guidance: str = Field(..., description="Clear plain-English allocation advice")
+
+
+class Stage5RetailFormatterOutput(BaseModel):
+    as_of_timestamp_et: datetime
+    coverage_start_date: date
+    coverage_end_date: date
+    traffic_light_status: TrafficLightStatus = Field(..., description="GREEN, YELLOW, or RED")
+    traffic_light_summary: str = Field(..., description="1-sentence plain English summary of market risk level")
+    retail_report_markdown: str = Field(..., description="Complete plain-English retail newsletter markdown")
+    retail_file_path: str = Field(..., description="Persisted path to Production retail note")
+    action_checklist: List[RetailActionItem] = Field(default_factory=list, description="Actionable portfolio checklist")
     audit_trace: List[str] = Field(default_factory=list)

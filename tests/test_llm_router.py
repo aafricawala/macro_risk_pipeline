@@ -1,5 +1,5 @@
 """
-Unit Tests for src/core/llm_router.py
+Unit Tests for src/core/llm_router.py.
 Verifies programmatic version sorting and dynamic model discovery.
 """
 from unittest.mock import MagicMock, patch
@@ -21,7 +21,6 @@ def test_parse_model_version_tuple_sorting():
 
     assert v37_flash > v25_flash
     assert v25_flash > v15_flash
-    # Flash is prioritized over Pro for throughput
     assert v15_flash > v15_pro
 
 
@@ -31,7 +30,7 @@ def test_discover_and_sort_available_models_mocked():
 
     m1 = MagicMock(); m1.name = "models/gemini-1.5-flash"
     m2 = MagicMock(); m2.name = "models/gemini-2.5-flash"
-    m3 = MagicMock(); m3.name = "models/text-embedding-004"  # should be filtered out
+    m3 = MagicMock(); m3.name = "models/text-embedding-004"
     m4 = MagicMock(); m4.name = "models/gemini-3.7-flash"
 
     mock_client.models.list.return_value = [m1, m2, m3, m4]
@@ -57,7 +56,7 @@ def test_execute_dynamic_json_query_fallback(mock_client_cls):
     mock_resp_success = MagicMock()
     mock_resp_success.text = '{"status": "success", "tier": "TIER_1"}'
 
-    # Model 1 fails with 503, Model 2 succeeds
+    # Model 1 fails with 503 twice, Model 2 succeeds
     mock_client.models.generate_content.side_effect = [
         Exception("503 UNAVAILABLE: Server high demand"),
         Exception("503 UNAVAILABLE: Server high demand"),
@@ -66,7 +65,7 @@ def test_execute_dynamic_json_query_fallback(mock_client_cls):
 
     result_json, chosen_model = execute_dynamic_json_query(
         prompt="Test Prompt",
-        api_key="mock_key",
+        api_key="valid_test_format_key_12345",
     )
 
     assert result_json["status"] == "success"

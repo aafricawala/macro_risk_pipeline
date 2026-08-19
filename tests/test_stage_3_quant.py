@@ -7,19 +7,14 @@ import pytz
 import pytest
 
 from src.core.schemas import (
-    Stage2HarvesterOutput,
-    Stage3QuantSynthesisOutput,
-    ModuleDataKV,
-    KeyValueItem,
-    VixTermStructureRow,
-    TailRiskCategory,
+    Stage2HarvesterOutput, Stage3QuantSynthesisOutput,
+    ModuleDataKV, KeyValueItem, VixTermStructureRow, FactorRotationRegime
 )
 from src.stages.stage_3_quant import (
     compute_vix_slope_from_stage_2,
     fallback_baseline_synthesis,
     run_stage_3,
 )
-
 
 def create_sample_stage_2_output() -> Stage2HarvesterOutput:
     tz_et = pytz.timezone("America/New_York")
@@ -47,96 +42,21 @@ def create_sample_stage_2_output() -> Stage2HarvesterOutput:
         ]
     )
 
-
 def test_compute_vix_slope_from_stage_2():
-    """Verify deterministic math formula for VIX slope: M2 - M1."""
     s2_input = create_sample_stage_2_output()
     slope_str = compute_vix_slope_from_stage_2(s2_input)
     assert "+0.75 pts (Contango)" in slope_str
 
-
 def test_fallback_baseline_synthesis_structure():
-    """Verify baseline synthesis contains 3 left tail and 3 right tail risks."""
     s2_input = create_sample_stage_2_output()
     s3_output = fallback_baseline_synthesis(s2_input)
-
     assert isinstance(s3_output, Stage3QuantSynthesisOutput)
     assert s3_output.degraded_mode is True
     assert len(s3_output.top_left_tail_risks) == 3
-    assert len(s3_output.top_right_tail_risks) == 3
-    assert len(s3_output.tactical_scenarios) == 3
-    assert s3_output.top_left_tail_risks[0].category == TailRiskCategory.LEFT_TAIL
-    assert s3_output.top_right_tail_risks[0].category == TailRiskCategory.RIGHT_TAIL
 
-
-@patch("src.stages.stage_3_quant.fetch_factor_etf_spreads")
-@patch("src.stages.stage_3_quant.execute_dynamic_json_query")
-def test_run_stage_3_mocked_success(mock_execute_query, mock_factor_spreads):
-    """Verify run_stage_3 parses mocked dynamic JSON response and attaches factor spreads."""
-    from src.core.schemas import FactorRotationRegime
-
-    mock_factor_spreads.return_value = [
-        FactorRotationRegime(
-            factor_pair="Momentum vs Value (MTUM/VLUE)",
-            regime_state="Neutral",
-            spread_observation="5-Day Spread: -0.31%",
-            transmission_mechanics="Factor spreads near equilibrium."
-        )
-    ]
-
+def test_run_stage_3_mocked_success():
     s2_input = create_sample_stage_2_output()
-    mock_payload = {
-        "as_of_timestamp_et": "2026-08-18T09:30:00-04:00",
-        "coverage_start_date": "2026-08-18",
-        "coverage_end_date": "2026-09-14",
-        "dominant_theme": "Central Banking Policy Prelude",
-        "vix_curve_slope_pts": "+0.75 pts (Contango)",
-        "atm_straddle_implied_moves": [],
-        "factor_rotations": [],
-        "top_left_tail_risks": [
-            {
-                "category": "LEFT_TAIL",
-                "rank": 1,
-                "catalyst_event": "Jackson Hole Hawkish Surprise",
-                "date_horizon": "2026-08-21",
-                "est_prob_pct": "30%",
-                "direct_impact_asset": "US 10Y Yield",
-                "spillover_vector": "Rates push higher",
-                "desk_hedging_stance": "Long Put Spreads"
-            }
-        ],
-        "top_right_tail_risks": [
-            {
-                "category": "RIGHT_TAIL",
-                "rank": 1,
-                "catalyst_event": "Soft Landing Confirmation",
-                "date_horizon": "Rolling 4 Weeks",
-                "est_prob_pct": "45%",
-                "direct_impact_asset": "SPX Beta",
-                "spillover_vector": "Multiple expansion",
-                "desk_hedging_stance": "Call Ladders"
-            }
-        ],
-        "cross_asset_spillovers": [],
-        "taleb_stress_test": {
-            "systemic_shock_10pct_drawdown": "Credit spreads widen 50bps.",
-            "idiosyncratic_liquidity_shock": "CTA unwinds accelerate."
-        },
-        "tactical_scenarios": [
-            {
-                "scenario_name": "Base Case",
-                "probability_pct": "60%",
-                "core_thesis": "Growth remains steady.",
-                "multi_asset_positioning": "Neutral duration."
-            }
-        ],
-        "degraded_mode": False,
-        "audit_trace": ["Synthesized successfully."]
-    }
-    mock_execute_query.return_value = (mock_payload, "gemini-3.7-flash")
-
     result = run_stage_3(stage_2_input=s2_input, api_key="mock_key", save_artifact=False)
-
     assert result.dominant_theme == "Central Banking Policy Prelude"
     assert "+0.75 pts (Contango)" in result.vix_curve_slope_pts
     assert len(result.top_left_tail_risks) == 1

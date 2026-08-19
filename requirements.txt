@@ -13,11 +13,33 @@ tenacity>=8.2.3
 # LLM Inference (Google GenAI for Gemini 3.x Flash)
 google-genai>=0.1.1
 
+# Agent Orchestration & State Machines
+langgraph>=0.0.30
+
 # HTTP & Public Macro REST Ingestion
 requests>=2.31.0
 
 # Real-Time Factor ETF Ingestion
 yfinance>=0.2.36
+
+# High-Performance Clean HTML Text Extraction
+trafilatura>=1.8.0
+
+# Live RSS / XML News Feed Ingestion
+feedparser>=6.0.11
+
+# Embedded Local Vector Database & Telemetry
+opentelemetry-api>=1.24.0
+opentelemetry-sdk>=1.24.0
+chromadb>=0.4.24
+
+# Presentation Layer & Dashboard
+markdown>=3.5.0
+streamlit>=1.30.0
+
+# Google Drive Cloud Upload & Service Account Auth
+google-api-python-client>=2.100.0
+google-auth>=2.20.0
 
 # Automated Testing Framework
 pytest>=8.0.0
